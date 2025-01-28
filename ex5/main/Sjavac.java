@@ -1,8 +1,8 @@
 package ex5.main;
 import java.io.File;
-//import java.util.regexp.Matcher;
-//import java.util.regexp.Pattern;
-//import java.util.function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.function.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +10,13 @@ public class Sjavac {
     private static final int ZERO = 0;
     private static final int ONE = 1;
     private static final int TWO = 2;
+    private static final String NOT_EXACTLY_ONE_INPUT =
+            "Error: Illegal number of arguments. Expected exactly one source file.";
+    private static final String SJAVA = ".sjava";
+    private static final String WRONG_FORMAT_ERROR =
+            "Error: Wrong file format. Expected a .java file.";
+    private static final String ILLEGAL_CODE_ERROR = "Error: Code is illegal.";
+
 //    3 Options for Lines:
 //    - Some kind of comment, has to start with '//' with no whitespace before and is to be ignored.
 //    - An empty line. Containing only white spaces.
@@ -106,49 +113,70 @@ public class Sjavac {
 //        variables and method's names, and in the other one we will go through everything.
 
     public static void main(String[] args) {
-        // Check if there is exactly one argument (the source file name)
-        if (args.length != 1) {
-            // Maybe replace with Error class.
-            System.err.println("Error: Illegal number of arguments. Expected exactly one source file.");
-            System.out.println(TWO);
-            return;
-        }
 
-        String sourceFileName = args[0];
+        // Check if there is exactly one argument (the source file name)
+        if (checkOnlyOneArg(args))
+            return;
 
         try {
             // Validate file name and format
-            File sourceFile = new File(sourceFileName);
-            if (!sourceFile.exists() || !sourceFile.isFile()) {
-                // Maybe replace with Error class.
-                System.err.println("Error: File not found or invalid filename.");
-                System.out.println(TWO);
+            File sourceFile = new File(args[ZERO]);
+            if (makeSureFileExistsAndLegal(sourceFile))
                 return;
-            }
 
             // Check if the file has the correct format (e.g., ends with ".java")
-            if (!sourceFileName.endsWith(".sjava")) {
-                // Maybe replace with Error class.
-                System.err.println("Error: Wrong file format. Expected a .java file.");
-                System.out.println(TWO);
+            if (validateFormat(args[ZERO]))
                 return;
-            }
 
             // Validate the source file's content
-            boolean isLegal = validateFile(sourceFile);
-
-            if (isLegal) {
-                System.out.println(ZERO);
-            } else {
-                // Maybe replace with Error class.
-                System.err.println("Error: Code is illegal.");
-                System.out.println(ONE);
-            }
+            validateContent(sourceFile);
         } catch (Exception e) {
+
             // Maybe replace with Error class.
             throw new RuntimeException(e);
         }
 
+    }
+
+    private static void validateContent(File sourceFile) {
+
+        if (validateFile(sourceFile)) {
+            System.out.println(ZERO);
+        } else {
+            // Maybe replace with Error class.
+            System.err.println(ILLEGAL_CODE_ERROR);
+            System.out.println(ONE);
+        }
+    }
+
+    private static boolean validateFormat(String sourceFileName) {
+        if (!sourceFileName.endsWith(SJAVA)) {
+            // Maybe replace with Error class.
+            System.err.println(WRONG_FORMAT_ERROR);
+            System.out.println(TWO);
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean makeSureFileExistsAndLegal(File sourceFile) {
+        if (!sourceFile.exists() || !sourceFile.isFile()) {
+            // Maybe replace with Error class.
+            System.err.println("Error: File not found or invalid filename.");
+            System.out.println(TWO);
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean checkOnlyOneArg(String[] args) {
+        if (args.length != ONE) {
+            // Maybe replace with Error class.
+            System.err.println(NOT_EXACTLY_ONE_INPUT);
+            System.out.println(TWO);
+            return true;
+        }
+        return false;
     }
 
     private static void validateGlobalVariable(String line, String currentScope, Map<String, String> globalVariablesType) {
@@ -211,7 +239,7 @@ public class Sjavac {
         String currentScope = "global";
 
         // Tracks the current level of braces
-        int braceLevel = 0;
+        int braceLevel = ZERO;
         for (String line : cleanedLines) {
             // Adjust brace level
             if (line.contains("{")) {
@@ -221,7 +249,7 @@ public class Sjavac {
                 braceLevel--;
             }
             // Only process lines when outside any method (braceLevel == 0)
-            if (braceLevel == 0) {
+            if (braceLevel == ZERO) {
                 // Check for global variables
                 if (line.matches("^\\s*(final\\s+)?(int|double|String|boolean|char)" +
                         "\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=.*;$")) {
