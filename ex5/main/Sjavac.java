@@ -151,10 +151,7 @@ public class Sjavac {
 
     }
 
-    private static void validateGlobalVariable(String line, String[] currentScope, Map<String, String> globalVariablesType,
-                                   Map<String, Integer> globalInts, Map<String, Integer> globalDoubles,
-                                    Map<String, Integer> globalStrings, Map<String, Integer> globalBooleans,
-                                                Map<String, Integer> globalChars) {
+    private static void validateGlobalVariable(String line, String currentScope, Map<String, String> globalVariablesType) {
         /**
          * Validate a global variable declaration line.
          * Add the variable to the global variables map and assign it the right type.
@@ -162,18 +159,10 @@ public class Sjavac {
          * @param line The line to validate.
          * @param currentScope The current scope.
          * @param globalVariablesType A map of global variables and their types.
-         * @param globalInts A map of global int variables and their line numbers.
-         * @param globalDoubles A map of global double variables and their line numbers.
-         * @param globalStrings A map of global String variables and their line numbers.
-         * @param globalBooleans A map of global boolean variables and their line numbers.
-         * @param globalChars A map of global char variables and their line numbers.
          */
     }
 
-    private static void validateGlobalVariableNoInitialisation(String line, String[] currentScope, Map<String, String> globalVariablesType,
-                               Map<String, Integer> globalInts, Map<String, Integer> globalDoubles,
-                               Map<String, Integer> globalStrings, Map<String, Integer> globalBooleans,
-                                                       Map<String, Integer> globalChars) {
+    private static void validateGlobalVariableNoInitialisation(String line, String currentScope, Map<String, String> globalVariablesType) {
         /**
          * Validate a global variable declaration line without initialisation.
          * Add the variable to the global variables map and assign it the right type.
@@ -181,11 +170,6 @@ public class Sjavac {
          * @param line The line to validate.
          * @param currentScope The current scope.
          * @param globalVariablesType A map of global variables and their types.
-         * @param globalInts A map of global int variables and their line numbers.
-         * @param globalDoubles A map of global double variables and their line numbers.
-         * @param globalStrings A map of global String variables and their line numbers.
-         * @param globalBooleans A map of global boolean variables and their line numbers.
-         * @param globalChars A map of global char variables and their line numbers.
          */
     }
 
@@ -223,14 +207,8 @@ public class Sjavac {
 
         // First pass: check global variables and method names
         Map<String, String> globalVariablesType = new HashMap<>();
-        Map<String, Integer> globalInts = new HashMap<>();
-        Map<String, Integer> globalDoubles = new HashMap<>();
-        Map<String, Integer> globalStrings = new HashMap<>();
-        Map<String, Integer> globalBooleans = new HashMap<>();
-        Map<String, Integer> globalChars = new HashMap<>();
         Map<String, String> methodNames = new HashMap<>();
-        String[] currentScope = new String[1];
-        currentScope[0] = "global";
+        String currentScope = "global";
 
         // Tracks the current level of braces
         int braceLevel = 0;
@@ -248,15 +226,13 @@ public class Sjavac {
                 if (line.matches("^\\s*(final\\s+)?(int|double|String|boolean|char)" +
                         "\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=.*;$")) {
                     // Call a function to validate the global variable
-                    validateGlobalVariable(line, currentScope, globalVariablesType, globalInts, globalDoubles,
-                            globalStrings, globalBooleans, globalChars);
+                    validateGlobalVariable(line, currentScope, globalVariablesType);
                 }
                 // Check for global variables without initialization
                 else if (line.matches("^\\s*(final\\s+)?(int|double|String|boolean|char)" +
                         "\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*;$")) {
                     // Call a function to validate the global variable
-                    validateGlobalVariableNoInitialisation(line, currentScope, globalVariablesType, globalInts,
-                            globalDoubles, globalStrings, globalBooleans, globalChars);
+                    validateGlobalVariableNoInitialisation(line, currentScope, globalVariablesType);
                 }
                 // Check for method names
                 else if (line.matches("^\\s*void\\s+([a-zA-Z][a-zA-Z0-9_]*)\\s*\\(((\\s*(final\\s+)?" +
@@ -275,7 +251,21 @@ public class Sjavac {
             }
         }
 
+        if (braceLevel != 0) {
+            // TODO: print 1 and handle error, missing closing brace
+        }
+
         // Second pass: check the rest of the code
+        for (String line : cleanedLines){
+            // When inside a method
+            if (line.matches("^\\s*void\\s+([a-zA-Z][a-zA-Z0-9_]*)\\s*\\(((\\s*(final\\s+)?" +
+                    "(int|double|String|boolean|char)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*)(,\\s*(final\\s+)?" +
+                    "(int|double|String|boolean|char)\\s+[a-zA-Z_][a-zA-Z0-9_]*)*)?\\)\\s*\\{\\s*$")) {
+                // Update the current scope
+                currentScope = line.split("\\s+")[1] + "_" + currentScope;
+            }
+
+        }
 
 
         return false;
