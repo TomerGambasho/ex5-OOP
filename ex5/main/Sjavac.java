@@ -1,9 +1,9 @@
 package ex5.main;
+import ex5.checkers.ContentValidator;
+import ex5.checkers.PathValidator;
+
 import java.io.File;
-//import java.util.regexp.Matcher;
-//import java.util.regexp.Pattern;
 import java.util.stream.Collectors;
-//import java.util.function;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -120,41 +120,27 @@ public class Sjavac {
     public static void main(String[] args) {
 
         // Check if there is exactly one argument (the source file name)
-        if (args.length != 1) {
-            // Maybe replace with Error class.
-            System.err.println("Error: Illegal number of arguments. Expected exactly one source file.");
-            System.out.println(TWO);
+        if (wrongNumberOfInputs(args))
             return;
-        }
-
-        String sourceFileName = args[0];
 
         try {
-            // Validate file name and format
-            File sourceFile = new File(sourceFileName);
-            if (!sourceFile.exists() || !sourceFile.isFile()) {
-                // Maybe replace with Error class.
-                System.err.println("Error: File not found or invalid filename.");
-                System.out.println(TWO);
-                return;
-            }
 
-            // Check if the file has the correct format (e.g., ends with ".java")
-            if (!sourceFileName.endsWith(".sjava")) {
-                // Maybe replace with Error class.
-                System.err.println("Error: Wrong file format. Expected a .java file.");
-                System.out.println(TWO);
-                return;
+            String sourceFileName = args[ZERO];
+
+            // Validate file name and format
+            PathValidator pathValidator = new PathValidator(sourceFileName);
+            if(!pathValidator.validatePath()){
+                // todo ex bad path
             }
 
             // Validate the source file's content
-            boolean isLegal = validateFile(sourceFileName);
+            ContentValidator contentValidator = new ContentValidator(sourceFileName);
 
-            if (isLegal) {
+            if (contentValidator.validate()) {
                 System.out.println(ZERO);
             } else {
-                // Maybe replace with Error class.
-                System.err.println("Error: Code is illegal.");
+                // TODO Maybe replace with Error class.
+                System.err.println(ILLEGAL_CODE_ERROR);
                 System.out.println(ONE);
             }
         } catch (Exception e) {
@@ -164,17 +150,16 @@ public class Sjavac {
 
     }
 
-
-    private static void validateGlobalVariable(String line, int currentScope, Map<String, String> globalVariablesType) {
-        /**
-         * Validate a global variable declaration line.
-         * Add the variable to the global variables map and assign it the right type.
-         * Add the variable to the right type map.
-         * @param line The line to validate.
-         * @param currentScope The current scope.
-         * @param globalVariablesType A map of global variables and their types.
-         */
+    private static boolean wrongNumberOfInputs(String[] args) {
+        if (args.length != 1) {
+            // Maybe replace with Error class.
+            System.err.println("Error: Illegal number of arguments. Expected exactly one source file.");
+            System.out.println(TWO);
+            return true;
+        }
+        return false;
     }
+
 
     private static void validateGlobalVariableNoInitialisation(String line, int currentScope, Map<String, String> globalVariablesType) {
         /**
@@ -324,7 +309,7 @@ public class Sjavac {
                     validateGlobalVariable(line, currentScope, globalVariablesType);
                 }
                 // Check for global variables without initialization
-                else if (line.matches("^\\s*(final\\s+)?(int|double|String|boolean|char)" +
+                else if (line.matches("^\s*(final\\s+)?(int|double|String|boolean|char)" +
                         "\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*;$")) {
                     // Call a function to validate the global variable
                     validateGlobalVariableNoInitialisation(line, currentScope, globalVariablesType);
