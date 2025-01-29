@@ -156,6 +156,7 @@ public class Sjavac {
 
     }
 
+
     private static void validateGlobalVariable(String line, int currentScope, Map<String, String> globalVariablesType) {
         /**
          * Validate a global variable declaration line.
