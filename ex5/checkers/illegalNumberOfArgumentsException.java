@@ -1,4 +1,4 @@
-package ex5.main;
+package ex5.checkers;
 
 public class illegalNumberOfArgumentsException{
     private static final int TWO = 2;

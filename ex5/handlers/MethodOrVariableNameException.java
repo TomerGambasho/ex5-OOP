@@ -1,13 +1,13 @@
 package ex5.handlers;
 
-public class MethodOrVariableNameException {
-    private static final int ONE = 1;
-    private static final String prefixMessage = "Method or Variable error: ";
+public class MethodOrVariableNameException extends Exception{
+    private static final String prefixMessage = "Error: ";
 
-    public MethodOrVariableNameException() {}
+    public MethodOrVariableNameException(String massage) {
+        super(massage);
+    }
 
-    public void printMessage(String message) {
-        System.out.println(ONE);
-        System.err.println(prefixMessage + message);
+    public void printMessage() {
+        System.err.println(prefixMessage + super.getMessage());
     }
 }

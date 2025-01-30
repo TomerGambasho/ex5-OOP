@@ -1,13 +1,21 @@
 package ex5.handlers;
 
-public class WrongTypeInitializationException {
-    private static final int ONE = 1;
-    private static final String prefixMessage = "Variable initialized with wrong type: ";
+public class WrongTypeInitializationException extends Exception{
+    private static final String prefixMessage1 = "Error: variable: ";
+    private static final String prefixMessage2 = " , should be initialized with type: ";
+    private final String name;
+    private final String type;
+    private final String value;
+    private static final String prefixMessage3 = " , instead got |";
 
-    public WrongTypeInitializationException() {}
+    public WrongTypeInitializationException(String name, String type, String value) {
+        this.name = name;
+        this.type = type;
+        this.value = value;
+    }
 
-    public void printMessage(String message) {
-        System.out.println(ONE);
-        System.err.println(prefixMessage + message);
+    public String getMessage() {
+        return prefixMessage1 + name + prefixMessage2 +
+                type + prefixMessage3 + value + "|";
     }
 }

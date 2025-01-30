@@ -1,14 +1,6 @@
 package ex5.main;
 import ex5.checkers.ContentValidator;
-import ex5.checkers.PathValidator;
 
-import java.io.File;
-import java.util.stream.Collectors;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Sjavac {
@@ -119,39 +111,29 @@ public class Sjavac {
 
     public static void main(String[] args) {
 
-        // Check if there is exactly one argument (the source file name)
-        if (wrongNumberOfInputs(args))
-            return;
-
         try {
 
-            String sourceFileName = args[ZERO];
+            // Validate number of arguments, file name and format
+            PathValidator pathValidator = new PathValidator(args);
+            pathValidator.validatePath();
 
-            // Validate file name and format
-            PathValidator pathValidator = new PathValidator(sourceFileName);
-            if(!pathValidator.validatePath()){
-                // todo ex bad path
-            }
+            String sourceFileName = args[ZERO];
 
             // Validate the source file's content
             ContentValidator contentValidator = new ContentValidator(sourceFileName);
 
-            if (contentValidator.validate()) {
-                System.out.println(ZERO);
-            } else {
-                // TODO Maybe replace with Error class.
-                System.err.println(ILLEGAL_CODE_ERROR);
-                System.out.println(ONE);
-            }
+            contentValidator.validate();
+            System.out.println(ZERO);
+
         } catch (Exception e) {
-            // Maybe replace with Error class.
-            throw new RuntimeException(e);
+
+            System.err.println(e.getMessage());
         }
 
     }
 
     private static boolean wrongNumberOfInputs(String[] args) {
-        if (args.length != 1) {
+        if (args.length != ONE) {
             // Maybe replace with Error class.
             System.err.println("Error: Illegal number of arguments. Expected exactly one source file.");
             System.out.println(TWO);
@@ -169,17 +151,6 @@ public class Sjavac {
          * @param line The line to validate.
          * @param currentScope The current scope.
          * @param globalVariablesType A map of global variables and their types.
-         */
-    }
-
-    private static void validateMethodName(String line, Map<String, String> methodNames) {
-        /**
-         * Validate a method name declaration line.
-         * Add the method name to the method names map.
-         * Validate that the method name is unique.
-         * Validate that the parameters list is valid.
-         * @param line The line to validate.
-         * @param methodNames A map of method names.
          */
     }
 
@@ -262,128 +233,6 @@ public class Sjavac {
          * @param currentScope The current scope.
          * @param globalVariablesType A map of global variables and their types.
          */
-    }
-
-    private static boolean validateFile(String path) throws IOException {
-        // Split file into lines
-        List<String> cleanedLines = Files.readAllLines(Paths.get(path)).stream()
-                .map(String::trim) // Trim whitespace
-                .filter(line -> !line.isEmpty() && !line.matches("^//.*")) // Remove empty & comment lines
-                .collect(Collectors.toList());
-
-        // Validate no comment lines with whitespace before //
-        for (String line : cleanedLines) {
-            // Check for comment lines that start with whitespace and then //
-            if (line.matches("^\\s*//.*$")) {
-                // TODO: print 1 and handle error
-                System.out.println(ONE);
-            }
-        }
-
-        // First pass: check global variables and method names
-        Map<String, String> globalVariablesType = new HashMap<>();
-        Map<String, String> methodNames = new HashMap<>();
-        int currentScope = 0;
-
-        // Tracks the current level of braces
-        for (String line : cleanedLines) {
-            // Adjust brace level
-            if (line.contains("{")) {
-                currentScope++;
-                if (line.matches("^\\s*void\\s+([a-zA-Z][a-zA-Z0-9_]*)\\s*\\(((\\s*(final\\s+)?" +
-                        "(int|double|String|boolean|char)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*)(,\\s*(final\\s+)?" +
-                        "(int|double|String|boolean|char)\\s+[a-zA-Z_][a-zA-Z0-9_]*)*)?\\)\\s*\\{\\s*$")) {
-                    // Call a function to validate the method name
-                    validateMethodName(line, methodNames);
-                }
-            }
-            else if (line.contains("}")) {
-                currentScope--;
-            }
-            // Only process lines when outside any method (currentScope == 0)
-            else if (currentScope == 0) {
-                // Check for global variables
-                if (line.matches("^\\s*(final\\s+)?(int|double|String|boolean|char)" +
-                        "\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=.*;$")) {
-                    // Call a function to validate the global variable
-                    validateGlobalVariable(line, currentScope, globalVariablesType);
-                }
-                // Check for global variables without initialization
-                else if (line.matches("^\s*(final\\s+)?(int|double|String|boolean|char)" +
-                        "\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*;$")) {
-                    // Call a function to validate the global variable
-                    validateGlobalVariableNoInitialisation(line, currentScope, globalVariablesType);
-                }
-                else {
-                    // Line is illegal
-                    // TODO: print 1 and handle error
-                }
-            }
-        }
-
-        if (currentScope != 0) {
-            // TODO: print 1 and handle error, missing closing brace
-        }
-
-        // Second pass: check the rest of the code
-        for (String line : cleanedLines){
-            // When inside a method
-            if (line.matches("^\\s*void\\s+([a-zA-Z][a-zA-Z0-9_]*)\\s*\\(((\\s*(final\\s+)?" +
-                    "(int|double|String|boolean|char)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*)(,\\s*(final\\s+)?" +
-                    "(int|double|String|boolean|char)\\s+[a-zA-Z_][a-zA-Z0-9_]*)*)?\\)\\s*\\{\\s*$")) {
-                // Update the current scope with the method name before the '(' meaning dont add the ( to the scope
-                currentScope++;
-                addMethodParamsToVariables(line, currentScope, globalVariablesType);
-            }
-            else if(currentScope > 0){
-                // Check for local variables
-                if (line.matches("^\\s*(final\\s+)?(int|double|String|boolean|char)" +
-                        "\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=.*;$")) {
-                    // Call a function to validate the local variable
-                    validateLocalVariable(line, currentScope, globalVariablesType);
-                }
-                // Check for local variables without initialization
-                else if (line.matches("^\\s*(final\\s+)?(int|double|String|boolean|char)" +
-                        "\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*;$")) {
-                    // Call a function to validate the local variable
-                    validateLocalVariableNoInitialisation(line, currentScope, globalVariablesType);
-                }
-                // Check for variable assignment
-                else if (line.matches("^\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*=.*;$")) {
-                    // Call a function to validate the variable assignment
-                    validateVariableAssignment(line, currentScope, globalVariablesType);
-                }
-                // Check for method calls
-                else if (line.matches("^\\s*([a-zA-Z][a-zA-Z0-9_]*)\\s*\\(.*\\)\\s*;$")) {
-                    // Call a function to validate the method call
-                    validateMethodCall(line, currentScope, methodNames, globalVariablesType);
-                }
-                // Check for if/while blocks
-                else if (line.matches("^\\s*(if|while)\\s*\\(.*\\)\\s*\\{\\s*$")) {
-                    // Call a function to validate the if/while block
-                    validateIfWhileBlock(line, currentScope, globalVariablesType);
-                    currentScope++;
-                    // Update the current scope with if or while depending on the block
-                }
-                // Check for return statement
-                else if (line.matches("^\\s*return;\\s*$")) {
-                    // Call a function to validate the return statement
-                    validateReturnStatement(line, currentScope, globalVariablesType);
-                }
-                // Check for closing brace
-                else if (line.matches("^\\s*}\\s*$")) {
-                    // Update the current scope: remove the last part
-                    removeScopeParamsFromVariables(currentScope, globalVariablesType);
-                    currentScope--;
-                }
-                else {
-                    // Line is illegal
-                    // TODO: print 1 and handle error
-                    System.out.println(ONE);
-                }
-            }
-        }
-        return true;
     }
 }
 

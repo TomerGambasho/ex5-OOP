@@ -1,6 +1,6 @@
 package ex5.checkers;
 
-public class CodeOutsideMethodException {
+public class CodeOutsideMethodException extends Exception{
     private static final int ONE = 1;
     private static final String Message = "There was code outside of the methods, in the global scope.";
 
